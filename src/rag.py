@@ -69,7 +69,6 @@ def generate_response(
             "type": "file_search",
             "vector_store_ids": [vs_id]
         }],
-        temperature=0.2,
     )
 
     return response.output_text
