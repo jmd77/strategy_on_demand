@@ -50,14 +50,18 @@ def generate_response(briefing: str, use_case: str, extra_context: Optional[str]
         user_sections.append(f"Contexto adicional fornecido:\n{extra_context.strip()}")
     user_prompt = "\n\n".join(user_sections)
 
+    # Build the input with system and user messages
+    full_input = f"System instructions:\n{system_prompt}\n\nUser request:\n{user_prompt}"
+    
     response = client.responses.create(
         model=MODEL,
-        input=[
-            {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]},
-            {"role": "user", "content": [{"type": "input_text", "text": user_prompt}]},
-        ],
-        tools=[{"type": "file_search"}],
-        tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
+        input=full_input,
+        tools=[{
+            "type": "file_search",
+            "file_search": {
+                "vector_store_ids": [VECTOR_STORE_ID]
+            }
+        }],
         temperature=0.2,
     )
 
