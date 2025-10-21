@@ -1,0 +1,5 @@
+Framework ABC
+
+1. Diagnóstico inicial
+2. Mapeamento de oportunidades
+3. Plano de validação com hipóteses e entrevistas.
