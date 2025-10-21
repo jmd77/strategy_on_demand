@@ -1,9 +1,9 @@
-fastapi
+﻿fastapi
 uvicorn
 python-dotenv
 pydantic
 pydantic[email]
 tqdm
 gunicorn
-openai==1.40.0
-httpx==0.27.2
+openai>=2.0.0
+httpx
