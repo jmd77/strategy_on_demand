@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: strategy-on-demand
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MODEL
+        value: gpt-4o-mini
+      - key: VECTOR_STORE_ID
+        sync: false
+      - key: PORT
+        value: "8000"
+    healthCheckPath: /
