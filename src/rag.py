@@ -10,13 +10,8 @@ from openai import OpenAI
 
 load_dotenv()
 
-MODEL = os.getenv("MODEL", "gpt-4o-mini")
-VECTOR_STORE_ID = os.getenv("VECTOR_STORE_ID")
-
-_client: Optional[OpenAI] = None
-
-
 PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
+_client: Optional[OpenAI] = None
 
 
 class PromptNotFoundError(FileNotFoundError):
@@ -24,41 +19,75 @@ class PromptNotFoundError(FileNotFoundError):
 
 
 def get_client() -> OpenAI:
+    """Return a singleton OpenAI client instance."""
     global _client
     if _client is None:
-        _client = OpenAI()
+        # usa a chave do ambiente se estiver definida
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     return _client
 
 
 def load_prompt(use_case: str) -> str:
+    """Load the markdown prompt template associated with the use case."""
     prompt_path = PROMPTS_DIR / f"{use_case}.md"
     if not prompt_path.exists():
-        raise PromptNotFoundError(f"Prompt file not found for use case '{use_case}' at {prompt_path}")
+        raise PromptNotFoundError(
+            f"Prompt file not found for use case '{use_case}' at {prompt_path}"
+        )
     return prompt_path.read_text(encoding="utf-8")
 
 
-def generate_response(briefing: str, use_case: str, extra_context: Optional[str] = None) -> str:
+def build_prompt(*, use_case: str, briefing: str, extra_context: Optional[str] = None) -> str:
+    """Compose the full prompt combining template, briefing, and optional context."""
+    template = load_prompt(use_case).strip()
+    sections = [template, f"Briefing do cliente:\n{briefing.strip()}"]
+    if extra_context:
+        sections.append(f"Contexto adicional fornecido:\n{extra_context.strip()}")
+    return "\n\n".join(section for section in sections if section)
+
+
+def generate_response(
+    *,
+    briefing: str,
+    use_case: str,
+    extra_context: Optional[str] = None,
+    vector_store_id: Optional[str] = None,
+    k: int = 12,
+) -> str:
     """Generate a response using the OpenAI Responses API with file_search."""
-    if not VECTOR_STORE_ID:
+    resolved_vector_store = vector_store_id or os.getenv("VECTOR_STORE_ID")
+    if not resolved_vector_store:
         raise RuntimeError("VECTOR_STORE_ID environment variable is required.")
 
     client = get_client()
-    system_prompt = load_prompt(use_case)
-
-    user_sections = [f"Briefing do cliente:\n{briefing.strip()}"]
-    if extra_context:
-        user_sections.append(f"Contexto adicional fornecido:\n{extra_context.strip()}")
-    user_prompt = "\n\n".join(user_sections)
-
-    response = client.responses.create(
-        model=MODEL,
-        input=[
-            {"role": "system", "content": [{"type": "text", "text": system_prompt}]},
-            {"role": "user", "content": [{"type": "text", "text": user_prompt}]},
-        ],
-        tools=[{"type": "file_search"}],
-        tool_resources={"file_search": {"vector_store_ids": [VECTOR_STORE_ID]}},
-        temperature=0.2,
+    model = os.getenv("MODEL", "gpt-5-thinking")
+    temperature = float(os.getenv("TEMPERATURE", "0.1"))
+    full_prompt = build_prompt(
+        use_case=use_case, briefing=briefing, extra_context=extra_context
     )
 
-    return response.output_text
+    response = client.responses.create(
+        model=model,
+        temperature=temperature,
+        tools=[{
+            "type": "file_search",
+            "vector_store_ids": [resolved_vector_store],
+            "max_num_results": k,
+        }],
+        input=[{
+            "role": "user",
+            "content": [{"type": "text", "text": full_prompt}],
+        }],
+    )
+
+    # Prefer the convenience accessor; fallback to manual concat if absent
+    try:
+        return response.output_text.strip()
+    except AttributeError:
+        parts: list[str] = []
+        for item in getattr(response, "output", []) or []:
+            if getattr(item, "type", "") == "message":
+                for content in getattr(item, "content", []) or []:
+                    if content.get("type") == "text":
+                        parts.append(content.get("text", ""))
+        return "\n".join(p for p in parts if p).strip()

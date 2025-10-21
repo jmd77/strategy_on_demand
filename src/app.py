@@ -22,22 +22,28 @@ USE_CASES = {
 app = FastAPI(title="Strategy On Demand RAG MVP")
 
 
+# --- models ---
 class BriefingRequest(BaseModel):
     briefing: str = Field(..., description="Briefing textual fornecido pelo cliente.")
 
 
 class GenerateRequest(BaseModel):
     briefing: str = Field(..., description="Briefing textual fornecido pelo cliente.")
-    use_case: Optional[str] = Field(None, description="Use case desejado. Se não informado, será roteado automaticamente.")
-    extra_context: Optional[str] = Field(None, description="Informações adicionais a serem consideradas na geração.")
+    use_case: Optional[str] = Field(
+        None, description="Use case desejado. Se não informado, será roteado automaticamente."
+    )
+    extra_context: Optional[str] = Field(
+        None, description="Informações adicionais a serem consideradas na geração."
+    )
 
 
 class GenerateResponse(BaseModel):
     use_case: str
     matched_keywords: List[str]
-    content: str
+    text: str
 
 
+# --- routes ---
 @app.post("/briefing-router")
 def briefing_router(payload: BriefingRequest) -> dict:
     """Classify the incoming briefing into a supported use case."""
@@ -67,7 +73,7 @@ def generate(payload: GenerateRequest) -> GenerateResponse:
         )
     except rag.PromptNotFoundError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    except Exception as exc:  # pragma: no cover - safety net for runtime errors
+    except Exception as exc:  # safety net
         raise HTTPException(status_code=500, detail=f"Erro ao gerar resposta: {exc}") from exc
 
     if not matched_keywords and use_case:
@@ -76,7 +82,7 @@ def generate(payload: GenerateRequest) -> GenerateResponse:
     return GenerateResponse(
         use_case=use_case,
         matched_keywords=matched_keywords,
-        content=content,
+        text=content,
     )
 
 
@@ -84,5 +90,5 @@ def generate(payload: GenerateRequest) -> GenerateResponse:
 def read_root() -> dict:
     return {
         "message": "Strategy On Demand RAG MVP ativo.",
-        "model": os.getenv("MODEL", "gpt-4o-mini"),
+        "model": os.getenv("MODEL", "gpt-5-thinking"),
     }
