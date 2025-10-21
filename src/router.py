@@ -6,10 +6,42 @@ from typing import Dict, List, Tuple
 import re
 
 USE_CASE_KEYWORDS: Dict[str, List[str]] = {
-    "analysis_guide": ["análise", "diagnóstico", "relatório", "guia", "apresentação"],
-    "hypotheses": ["hipótese", "oportunidade", "growth", "crescimento", "ideia"],
-    "validation_plan": ["validar", "validação", "teste", "experimento", "piloto"],
-    "interview_questionnaire": ["entrevista", "questionário", "stakeholder", "pesquisa"],
+    # Expanded with English terms and common variants for better matching
+    "analysis_guide": [
+        # PT
+        "análise", "analise", "diagnóstico", "diagnostico", "diagnosticar",
+        "relatório", "relatorio", "guia", "apresentação", "apresentacao",
+        "modelo", "estrutura", "distribuidor", "distribuidores", "canal",
+        "rtm", "roteiro", "plano", "transformação", "transformacao",
+        # EN
+        "analysis", "diagnosis", "diagnose", "report", "guide", "presentation",
+        "model", "structure", "distributor", "distributors", "channel",
+        "rtm structure", "route to market", "rtm transformation",
+    ],
+    "hypotheses": [
+        # PT
+        "hipótese", "hipoteses", "hipótese", "hipóteses", "oportunidade",
+        "growth", "crescimento", "ideia", "alavanca", "driver",
+        # EN
+        "hypothesis", "hypotheses", "opportunity", "opportunities", "idea",
+        "growth driver", "growth", "lever", "driver",
+    ],
+    "validation_plan": [
+        # PT
+        "validar", "validação", "validacao", "teste", "experimento", "piloto",
+        "prova", "cobertura", "coverage", "plano de validação", "plano de validacao",
+        "pilot test",
+        # EN
+        "validate", "validation", "test", "testing", "experiment", "pilot",
+        "pilot test", "coverage", "rollout",
+    ],
+    "interview_questionnaire": [
+        # PT
+        "entrevista", "questionário", "questionario", "stakeholder", "pesquisa",
+        "roteiro de entrevista", "guia de entrevista",
+        # EN
+        "interview", "questionnaire", "stakeholder", "survey", "interview guide",
+    ],
 }
 
 USE_CASE_ORDER: Tuple[str, ...] = (
