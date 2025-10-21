@@ -37,9 +37,18 @@ def load_prompt(use_case: str) -> str:
     return prompt_path.read_text(encoding="utf-8")
 
 
-def generate_response(briefing: str, use_case: str, extra_context: Optional[str] = None) -> str:
-    """Generate a response using the OpenAI Responses API with file_search."""
-    if not VECTOR_STORE_ID:
+def generate_response(
+    briefing: str,
+    use_case: str,
+    extra_context: Optional[str] = None,
+    vector_store_id: Optional[str] = None,
+) -> str:
+    """Generate a response using the OpenAI Responses API with file_search.
+
+    If ``vector_store_id`` is provided, it overrides the environment variable.
+    """
+    vs_id = vector_store_id or VECTOR_STORE_ID
+    if not vs_id:
         raise RuntimeError("VECTOR_STORE_ID environment variable is required.")
 
     client = get_client()
@@ -58,9 +67,7 @@ def generate_response(briefing: str, use_case: str, extra_context: Optional[str]
         input=full_input,
         tools=[{
             "type": "file_search",
-            "file_search": {
-                "vector_store_ids": [VECTOR_STORE_ID]
-            }
+            "vector_store_ids": [vs_id]
         }],
         temperature=0.2,
     )

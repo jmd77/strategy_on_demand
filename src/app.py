@@ -30,6 +30,7 @@ class GenerateRequest(BaseModel):
     briefing: str = Field(..., description="Briefing textual fornecido pelo cliente.")
     use_case: Optional[str] = Field(None, description="Use case desejado. Se não informado, será roteado automaticamente.")
     extra_context: Optional[str] = Field(None, description="Informações adicionais a serem consideradas na geração.")
+    vector_store_id: Optional[str] = Field(None, description="Override opcional do VECTOR_STORE_ID para testes.")
 
 
 class GenerateResponse(BaseModel):
@@ -64,6 +65,7 @@ def generate(payload: GenerateRequest) -> GenerateResponse:
             briefing=payload.briefing,
             use_case=use_case,
             extra_context=payload.extra_context,
+            vector_store_id=payload.vector_store_id,
         )
     except rag.PromptNotFoundError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
