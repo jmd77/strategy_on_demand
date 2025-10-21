@@ -76,7 +76,7 @@ def generate_response(
         }],
         input=[{
             "role": "user",
-            "content": [{"type": "text", "text": full_prompt}],
+            "content": [{"type": "input_text", "text": full_prompt}],
         }],
     )
 
