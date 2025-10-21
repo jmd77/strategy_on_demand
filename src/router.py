@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Dict, List, Tuple
 
 import re
+import unicodedata
 
 USE_CASE_KEYWORDS: Dict[str, List[str]] = {
     "analysis_guide": ["análise", "diagnóstico", "relatório", "guia", "apresentação"],
@@ -20,7 +21,17 @@ USE_CASE_ORDER: Tuple[str, ...] = (
 )
 
 
+def _strip_accents(text: str) -> str:
+    """Remove diacritical marks so matching becomes accent-insensitive."""
+
+    normalized = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+
+
 def normalize(text: str) -> str:
+    """Normalize text for keyword comparisons."""
+
+    text = _strip_accents(text)
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
@@ -30,7 +41,7 @@ def detect_use_case(briefing: str) -> Tuple[str, List[str]]:
 
     for use_case in USE_CASE_ORDER:
         keywords = USE_CASE_KEYWORDS[use_case]
-        hits = [kw for kw in keywords if kw in normalized]
+        hits = [kw for kw in keywords if normalize(kw) in normalized]
         if hits:
             return use_case, hits
     return "analysis_guide", []
